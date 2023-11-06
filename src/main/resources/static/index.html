@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Todo List</title>
+    <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.3/build/pure-min.css">
+    <style>
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .button-success {
+            background-color: #88c470;
+        }
+
+        .button-success:hover {
+            background-color: #77b162;
+        }
+
+        #task-list {
+            margin-top: 1rem;
+        }
+
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Todo List</h1>
+
+    <!-- Champ pour ajouter un élément à la liste -->
+    <div class="pure-form">
+        <input type="text" id="task-input" class="pure-input" placeholder="Nouvelle tâche" onkeypress="handleKeyPress(event)">
+        <button class="pure-button button-success" onclick="addTask()">Ajouter</button>
+    </div>
+
+    <ul id="task-list" class="pure-menu-list">
+        <!-- Les tâches seront ajoutées ici dynamiquement via JavaScript -->
+    </ul>
+</div>
+
+<script>
+    // Fonction pour récupérer les tâches depuis l'API REST
+    function fetchTasks() {
+        fetch('/todo')
+            .then(response => response.json())
+            .then(tasks => {
+                const taskList = document.getElementById('task-list');
+                taskList.innerHTML = ''; // Efface toutes les tâches actuellement affichées
+
+                tasks.forEach((task, index) => {
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('task-item');
+                    listItem.textContent = task.title;
+
+                    // Bouton pour supprimer ou marquer comme "fait" la tâche
+                    const doneButton = document.createElement('button');
+                    doneButton.textContent = 'Fait';
+                    doneButton.classList.add('pure-button', 'button-fait');
+                    doneButton.addEventListener('click', () => toggleTaskStatus(index));
+                    listItem.appendChild(doneButton);
+
+                    taskList.appendChild(listItem);
+                });
+            })
+            .catch(error => console.error('Erreur lors de la récupération des tâches :', error));
+    }
+
+    // Fonction pour ajouter une tâche à la liste en appelant l'API
+    function addTask() {
+        const taskInput = document.getElementById('task-input');
+        const newTaskTitle = taskInput.value;
+
+        if (newTaskTitle) {
+            fetch('/todo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title: newTaskTitle }),
+            })
+                .then(() => {
+                    taskInput.value = ''; // Efface le champ d'entrée
+                    fetchTasks(); // Rafraîchit la liste des tâches
+                })
+                .catch(error => console.error('Erreur lors de l\'ajout de la tâche :', error));
+        }
+    }
+
+    // Fonction pour supprimer ou marquer comme "fait" une tâche en appelant l'API
+    function toggleTaskStatus(taskId) {
+        fetch(`/todo/${taskId}`, {
+            method: 'PUT',
+        })
+            .then(() => fetchTasks()) // Rafraîchit la liste des tâches
+            .catch(error => console.error('Erreur lors de la modification de la tâche :', error));
+    }
+
+    // Appel de la fonction pour récupérer les tâches lors du chargement de la page
+    fetchTasks();
+
+    // Fonction pour gérer l'appui sur la touche "Entrée" pour ajouter une tâche
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+            addTask();
+        }
+    }
+</script>
+</body>
+</html>
