@@ -94,7 +94,7 @@
     // Fonction pour supprimer ou marquer comme "fait" une tâche en appelant l'API
     function toggleTaskStatus(taskId) {
         fetch(`/todo/${taskId}`, {
-            method: 'PUT',
+            method: 'DELETE',
         })
             .then(() => fetchTasks()) // Rafraîchit la liste des tâches
             .catch(error => console.error('Erreur lors de la modification de la tâche :', error));
